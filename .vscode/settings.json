@@ -7,6 +7,9 @@
     "azureFunctions.projectRuntime": "~4",
     "debug.internalConsoleOptions": "neverOpen",
     "azureFunctions.projectLanguageModel": 2,
+    "python.defaultInterpreterPath": "${workspaceFolder}/pipeline/.venv/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
     "chat.agentSkillsLocations": {
         ".agents/skills": true,
         ".github/skills": true,
