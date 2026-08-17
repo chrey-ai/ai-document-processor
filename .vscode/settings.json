@@ -10,6 +10,7 @@
     "python.defaultInterpreterPath": "${workspaceFolder}/pipeline/.venv/bin/python",
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.terminal.useEnvFile": true,
     "chat.agentSkillsLocations": {
         ".agents/skills": true,
         ".github/skills": true,

@@ -1450,14 +1450,6 @@ module testVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = if (_deployVM
   // ]
 }
 
-// var _fileUris = [
-//   'https://raw.githubusercontent.com/Azure/GPT-RAG/refs/tags/${_manifest.tag}/infra/install.ps1'
-// ]
-var _fileUris = [
-  'https://raw.githubusercontent.com/Azure/ai-document-processor/refs/heads/main/infra/install.ps1'
-]
-
-
 resource cse 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = if (_deployVM && _networkIsolation) {
   // // scope: ResourceGroup
   name: '${_ztVmName}/cse'
@@ -1469,8 +1461,7 @@ resource cse 'Microsoft.Compute/virtualMachines/extensions@2024-11-01' = if (_de
     autoUpgradeMinorVersion: true
     forceUpdateTag: 'alwaysRun'
     settings: {
-      fileUris: _fileUris
-      commandToExecute:  'powershell.exe -ExecutionPolicy Unrestricted -File install.ps1 -AzureTenantId ${subscription().tenantId} -AzureSubscriptionId ${subscription().subscriptionId} -AzureResourceGroupName ${resourceGroup().name} -AzdEnvName ${environmentName}'
+      commandToExecute: '''powershell.exe -ExecutionPolicy Unrestricted -Command "$uri = 'https://raw.githubusercontent.com/Azure/ai-document-processor/refs/heads/main/infra/install.ps1'; $maxAttempts = 12; for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) { try { Write-Host (\"Attempt $attempt/\" + $maxAttempts + \": Downloading install.ps1\"); Invoke-WebRequest -Uri $uri -OutFile install.ps1 -UseBasicParsing -TimeoutSec 120; Write-Host \"Download successful\"; break } catch { if ($attempt -eq $maxAttempts) { Write-Error (\"Failed after \" + $maxAttempts + \" attempts: \" + $_); exit 1 }; $wait = [math]::Min(300, [math]::Pow(2, $attempt)); Write-Host (\"Attempt $attempt failed (\" + $_ + \"). Waiting $wait seconds before retry...\"); Start-Sleep -Seconds $wait } }; & .\install.ps1 -AzureTenantId '${subscription().tenantId}' -AzureSubscriptionId '${subscription().subscriptionId}' -AzureResourceGroupName '${resourceGroup().name}' -AzdEnvName '${environmentName}'"'''
     }
     protectedSettings: {
       
