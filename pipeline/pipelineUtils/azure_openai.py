@@ -6,9 +6,14 @@ from configuration import Configuration
 
 config = Configuration()
 
-OPENAI_API_BASE = config.get_value("OPENAI_API_BASE")
-OPENAI_MODEL = config.get_value("OPENAI_MODEL")
-OPENAI_API_VERSION = config.get_value("OPENAI_API_VERSION")
+def get_openai_setting(name):
+    value = config.config.get(name)
+    return value if value else config.get_value(name)
+
+
+OPENAI_API_BASE = get_openai_setting("OPENAI_API_BASE")
+OPENAI_MODEL = get_openai_setting("OPENAI_MODEL")
+OPENAI_API_VERSION = get_openai_setting("OPENAI_API_VERSION")
 
 
 def run_prompt(pipeline_id, system_prompt, user_prompt):

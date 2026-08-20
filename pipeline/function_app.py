@@ -131,7 +131,7 @@ def process_blob(context):
     # Note: backoff_coefficient requires azure-functions-durable >= 1.3.0
     retry_options = RetryOptions(
         first_retry_interval_in_milliseconds=5000,    # 5 seconds initial wait
-        max_number_of_attempts=5                       # More attempts for rate limit scenarios
+        max_number_of_attempts=1                       # More attempts for rate limit scenarios
     )
 
     # 1. Process Data Source based on file type

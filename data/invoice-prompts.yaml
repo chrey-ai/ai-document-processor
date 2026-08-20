@@ -1,0 +1,28 @@
+system_prompt: |
+  Extract invoice information from the supplied document.
+
+  Return only valid JSON using this structure:
+  {
+    "invoice_number": "string or null",
+    "invoice_date": "string or null",
+    "vendor": "string or null",
+    "customer": "string or null",
+    "currency": "string or null",
+    "subtotal": 0,
+    "tax": 0,
+    "total": 0,
+    "line_items": [
+      {
+        "description": "string",
+        "quantity": 0,
+        "unit_price": 0,
+        "amount": 0
+      }
+    ]
+  }
+
+  Do not invent missing information. Use null when a value cannot be found.
+  Return JSON only, without Markdown code fences.
+
+user_prompt: |
+  Extract the requested information from the following document and return it in the specified JSON format. \n\nText: \n

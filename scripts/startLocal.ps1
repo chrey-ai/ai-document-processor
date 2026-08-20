@@ -56,39 +56,11 @@ if (-not $SkipSettings) {
     # Validate required environment variables
     if (-not $env:PROCESSING_FUNCTION_APP_NAME) { throw "PROCESSING_FUNCTION_APP_NAME not set." }
     if (-not $env:APP_CONFIG_NAME) { throw "APP_CONFIG_NAME not set." }
-    if (-not $env:AZURE_STORAGE_ACCOUNT) { throw "AZURE_STORAGE_ACCOUNT not set." }
-    if (-not $env:RESOURCE_GROUP) { throw "RESOURCE_GROUP not set." }
-
     # Fetch app settings from Azure
     func azure functionapp fetch-app-settings $env:PROCESSING_FUNCTION_APP_NAME --decrypt
     func settings decrypt
 
-    # Get App Configuration connection string
-    $connString = az appconfig credential list `
-        --name $env:APP_CONFIG_NAME `
-        --query "[?name=='Primary'].connectionString" `
-        -o tsv
-
-    if (-not $connString) { throw "Failed to retrieve App Configuration connection string." }
-
-    # Get Storage account connection strings
-    $blobFuncConnString = az storage account show-connection-string `
-        --name $env:AZURE_STORAGE_ACCOUNT `
-        --resource-group $env:RESOURCE_GROUP `
-        --query connectionString `
-        -o tsv
-
-    if (-not $blobFuncConnString) { throw "Failed to retrieve storage account connection string." }
-
-    $blobDataStorageConnString = az storage account show-connection-string `
-        --name $env:AZURE_STORAGE_ACCOUNT `
-        --resource-group $env:RESOURCE_GROUP `
-        --query connectionString `
-        -o tsv
-
-    if (-not $blobDataStorageConnString) { throw "Failed to retrieve data storage connection string." }
-
-    # Update local.settings.json
+    # Use the signed-in developer identity for local Azure service access.
     $localSettingsPath = "local.settings.json"
     if (-not (Test-Path $localSettingsPath)) { throw "File not found: $localSettingsPath" }
 
@@ -98,9 +70,18 @@ if (-not $SkipSettings) {
         $json['Values'] = @{}
     }
 
-    $json['Values']['AZURE_APPCONFIG_CONNECTION_STRING'] = $connString
-    $json['Values']['AzureWebJobsStorage'] = $blobFuncConnString
-    $json['Values']['DataStorage'] = $blobDataStorageConnString
+    @(
+        'AZURE_CLIENT_ID',
+        'AZURE_APPCONFIG_CONNECTION_STRING',
+        'AzureWebJobsStorage',
+        'AzureWebJobsStorage__credential',
+        'AzureWebJobsStorage__clientId',
+        'DataStorage',
+        'DataStorage__credential',
+        'DataStorage__clientId'
+    ) | ForEach-Object {
+        $json['Values'].Remove($_)
+    }
 
     $json | ConvertTo-Json -Depth 10 | Set-Content $localSettingsPath -Encoding UTF8
 
@@ -108,6 +89,14 @@ if (-not $SkipSettings) {
 }
 else {
     Write-Host "Skipping settings fetch (-SkipSettings)" -ForegroundColor Yellow
+}
+
+Remove-Item -Path Env:AZURE_CLIENT_ID -ErrorAction SilentlyContinue
+[Environment]::SetEnvironmentVariable('AZURE_TOKEN_CREDENTIALS', 'AzureCliCredential')
+Remove-Variable -Name AZURE_CLIENT_ID -Scope Script -ErrorAction SilentlyContinue
+@('OPENAI_API_BASE', 'OPENAI_API_VERSION', 'OPENAI_MODEL') | ForEach-Object {
+    Remove-Item -Path "Env:$_" -ErrorAction SilentlyContinue
+    Remove-Variable -Name $_ -Scope Script -ErrorAction SilentlyContinue
 }
 
 # Set up virtual environment unless -SkipVenv is passed
